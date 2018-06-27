@@ -1,0 +1,9 @@
+Building BREAKBITS
+
+See doc/readme-qt.rst for instructions on building BREAKBITS QT,
+the intended-for-end-users, nice-graphical-interface, reference
+implementation of BREAKBITS.
+
+See doc/build-*.txt for instructions on building breakbitsd,
+the intended-for-services, no-graphical-interface, reference
+implementation of BREAKBITS.
