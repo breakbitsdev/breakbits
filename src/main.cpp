@@ -1041,7 +1041,10 @@ int64_t GetProofOfWorkReward(int64_t nFees)
 }
 
 // miner's coin stake reward based on coin age spent (coin-days)
-int64_t GetProofOfStakeReward(int64_t nCoinAge, int64_t nFees)
+// V1 reward is original reward structure, moves to V2 at block 70,000
+//
+
+int64_t GetProofOfStakeReward_V1(int64_t nCoinAge, int64_t nFees)
 {
     int64_t nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * COIN_YEAR_REWARD;  // 25 %
 
@@ -1052,8 +1055,7 @@ int64_t GetProofOfStakeReward(int64_t nCoinAge, int64_t nFees)
             {
             nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * COIN_YEAR_REWARD / 5; // 5%
             }
-            
-            
+                     
             else if(nBestHeight > 5000 && nBestHeight <= 6000)
             {
             nSubsidy = nCoinAge * 33 / (365 * 33 + 8) *  COIN_YEAR_REWARD * 40; // 1000%
@@ -1069,28 +1071,141 @@ int64_t GetProofOfStakeReward(int64_t nCoinAge, int64_t nFees)
             nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * COIN_YEAR_REWARD * 2;  // 50%
             }
 
-            else if(nBestHeight > 100000 && nBestHeight <= 150000)
+    return nSubsidy + nFees;
+}
+
+int64_t GetProofOfStakeReward_V2(int64_t nCoinAge, int64_t nFees)
+{
+    int64_t nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * COIN_YEAR_REWARD / 5;  // 5%
+	int64_t nMinSubsidy = 25 * CENT; // 25 CENTs == 0.25 COIN as min block reward
+	int64_t nMaxSubsidy = 20 * COIN; // 100 COIN max reward
+
+    if (fDebug && GetBoolArg("-printcreation"))
+        printf("GetProofOfStakeReward(): create=%s nCoinAge=%"PRId64"\n", FormatMoney(nSubsidy).c_str(), nCoinAge);
+
+            if(nBestHeight > 50000 && nBestHeight <= 70000)
+            {
+            nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * COIN_YEAR_REWARD * 2;  // 50%
+            nSubsidy = min(nSubsidy, nMaxSubsidy);  // cap reward            
+            }
+
+            else if(nBestHeight > 70000 && nBestHeight <= 71000)
+            {
+            nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * SUPERBLOCK_REWARD;  // 777%
+            nSubsidy = min(nSubsidy, nMaxSubsidy);  // cap reward            
+            }
+
+            else if(nBestHeight > 71000 && nBestHeight <= 100000)
+            {
+            nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * COIN_YEAR_REWARD * 2;  // 50%
+            nSubsidy = min(nSubsidy, nMaxSubsidy);  // cap reward            
+            }
+
+            else if(nBestHeight > 100000 && nBestHeight <= 140000)
             {
             nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * COIN_YEAR_REWARD * 1;  // 25%
+            nSubsidy = min(nSubsidy, nMaxSubsidy);  // cap reward            
+            }
+
+            else if(nBestHeight > 140000 && nBestHeight <= 141000)
+            {
+            nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * SUPERBLOCK_REWARD;  // 777%
+            nSubsidy = min(nSubsidy, nMaxSubsidy);  // cap reward            
+            }
+
+            else if(nBestHeight > 141000 && nBestHeight <= 150000)
+            {
+            nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * COIN_YEAR_REWARD * 1;  // 25%
+            nSubsidy = min(nSubsidy, nMaxSubsidy);  // cap reward            
             }
 
             else if(nBestHeight > 150000 && nBestHeight <= 200000)
             {
             nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * COIN_YEAR_REWARD / 2;  // 12.5%
+            nSubsidy = min(nSubsidy, nMaxSubsidy);  // cap reward            
             }
 
-            else if(nBestHeight > 200000 && nBestHeight <= 250000)
+            else if(nBestHeight > 200000 && nBestHeight <= 210000)
             {
             nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * COIN_YEAR_REWARD / 4;  // 6.25%
+            nSubsidy = min(nSubsidy, nMaxSubsidy);  // cap reward            
             }
 
-            else if(nBestHeight > 250000)
+            else if(nBestHeight > 210000 && nBestHeight <= 211000)
             {
-            nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * COIN_YEAR_REWARD / 5;  // 5%
+            nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * SUPERBLOCK_REWARD;  // 777%
+            nSubsidy = min(nSubsidy, nMaxSubsidy);  // cap reward            
+            }
+
+            else if(nBestHeight > 211000 && nBestHeight <= 250000)
+            {
+            nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * COIN_YEAR_REWARD / 4;  // 6.25%
+            nSubsidy = min(nSubsidy, nMaxSubsidy);  // cap reward            
+            }
+
+			// default rewards fall to %5 except for following periods
+			
+            else if(nBestHeight > 280000 && nBestHeight <= 281000)
+            {
+            nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * SUPERBLOCK_REWARD;  // 777%
+            nSubsidy = min(nSubsidy, nMaxSubsidy);  // cap reward            
+            }
+
+            else if(nBestHeight > 350000 && nBestHeight <= 351000)
+            {
+            nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * SUPERBLOCK_REWARD;  // 777%
+            nSubsidy = min(nSubsidy, nMaxSubsidy);  // cap reward            
+            }
+
+            else if(nBestHeight > 420000 && nBestHeight <= 421000)
+            {
+            nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * SUPERBLOCK_REWARD;  // 777%
+            nSubsidy = min(nSubsidy, nMaxSubsidy);  // cap reward            
+            }
+
+            else if(nBestHeight > 490000 && nBestHeight <= 491000)
+            {
+            nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * SUPERBLOCK_REWARD;  // 777%
+            nSubsidy = min(nSubsidy, nMaxSubsidy);  // cap reward            
+            }
+
+            else if(nBestHeight > 560000 && nBestHeight <= 561000)
+            {
+            nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * SUPERBLOCK_REWARD;  // 777%
+            nSubsidy = min(nSubsidy, nMaxSubsidy);  // cap reward            
+            }
+
+            else if(nBestHeight > 630000 && nBestHeight <= 631000)
+            {
+            nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * SUPERBLOCK_REWARD;  // 777%
+            nSubsidy = min(nSubsidy, nMaxSubsidy);  // cap reward            
+            }
+
+            else if(nBestHeight > 700000 && nBestHeight <= 701000)
+            {
+            nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * SUPERBLOCK_REWARD;  // 777%
+            nSubsidy = min(nSubsidy, nMaxSubsidy);  // cap reward            
+            }
+
+            else if(nBestHeight > 770000 && nBestHeight <= 771000)
+            {
+            nSubsidy = nCoinAge * 33 / (365 * 33 + 8) * SUPERBLOCK_REWARD;  // 777%
+            nSubsidy = min(nSubsidy, nMaxSubsidy);  // cap reward            
             }
 
 
-    return nSubsidy + nFees;
+    return max(nMinSubsidy, nSubsidy) + nFees; // prevent 0 reward stakes from happening by setting a min value of 0.25 COINs
+}
+
+int64_t GetProofOfStakeReward(int64_t nCoinAge, int64_t nFees)
+{
+	int64_t nReward = 0;
+	if (nBestHeight > 70000)
+		nReward = GetProofOfStakeReward_V2(nCoinAge, nFees);
+	else
+		nReward = GetProofOfStakeReward_V1(nCoinAge, nFees);
+	
+	return nReward;
 }
 
 static const int64_t nTargetTimespan = 16 * 60;  // 16 mins
@@ -2874,7 +2989,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         CAddress addrFrom;
         uint64_t nNonce = 1;
         vRecv >> pfrom->nVersion >> pfrom->nServices >> nTime >> addrMe;
-        if (pfrom->nVersion < MIN_PEER_PROTO_VERSION)
+        if (pfrom->nVersion < (GetAdjustedTime() > FORK_TIME ? MIN_PEER_PROTO_VERSION_FORK : MIN_PEER_PROTO_VERSION))
         {
             // disconnect from peers older than this proto version
             printf("partner %s using obsolete version %i; disconnecting\n", pfrom->addr.ToString().c_str(), pfrom->nVersion);
@@ -2951,8 +3066,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv)
         static int nAskedForBlocks = 0;
         if (!pfrom->fClient && !pfrom->fOneShot &&
             (pfrom->nStartingHeight > (nBestHeight - 144)) &&
-            (pfrom->nVersion < NOBLKS_VERSION_START ||
-             pfrom->nVersion >= NOBLKS_VERSION_END) &&
+           (pfrom->nVersion < NOBLKS_VERSION_START || pfrom->nVersion > (GetAdjustedTime() > FORK_TIME ? NOBLKS_VERSION_END_FORK : NOBLKS_VERSION_END)) &&
              (nAskedForBlocks < 1 || vNodes.size() <= 1))
         {
             nAskedForBlocks++;
